@@ -303,8 +303,15 @@ namespace StackExchange.Precompilation
         {
             var projectInfo = CommandLineProject.CreateProjectInfo(CscArgs.OutputFileName, "C#", Environment.CommandLine, _precompilationCommandLineArgs.BaseDirectory, workspace);
 
+            var compilationOptions = CscArgs.CompilationOptions.WithAssemblyIdentityComparer(DesktopAssemblyIdentityComparer.Default);
+            if (!string.IsNullOrEmpty(CscArgs.CompilationOptions.CryptoKeyFile))
+            {
+                var cryptoKeyFilePath = Path.Combine(CscArgs.BaseDirectory, CscArgs.CompilationOptions.CryptoKeyFile);
+                compilationOptions = compilationOptions.WithStrongNameProvider(new DesktopStrongNameProvider(ImmutableArray.Create(cryptoKeyFilePath)));
+            }
+
             projectInfo = projectInfo
-                .WithCompilationOptions(CscArgs.CompilationOptions
+                .WithCompilationOptions(compilationOptions
                     .WithSourceReferenceResolver(new SourceFileResolver(CscArgs.SourcePaths, CscArgs.BaseDirectory, CscArgs.PathMap))) // required for path mapping support
                 .WithDocuments(
                     projectInfo
